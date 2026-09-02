@@ -9,32 +9,37 @@ CERBER est un système d'authentification qui a pour but de sécuriser l'accès 
 ## Spécifications fonctionnelles
 
 Ce portail doit comprendre les fonctionnalités et prérequis suivants :
-
-* Ce système permet une seule authentification pour l'accès à plusieurs ressources informatiques (SSO).
-* Système de connexion par numéro fiscal et mot de passe.
-* Authentifier les utilisateurs afin de vérifier la légitimité de la demande d'accès à une ressource.
-* Mise en place d'une authentification multifacteur « MFA ».
-* La demande d'accès à une ressource est vérifiée selon l'identité et le rôle de l'utilisateur (rôle stocké dans la base de données).
-* Après 5 tentatives de connexion echouées, le compte est vérouillé.
+* Mise en place d'une authentification multi facteur « MFA » : 
+* Système de connexion par numéro fiscal et mot de passe. 
+* Code aléatoire envoyé par mail à l’utilisateur 
+* Vérification de l’accès à une ressource selon le rôle de l’utilisateur. 
+* Après 5 tentatives de connexion échouées, le compte est verrouillé. 
 * L'utilisateur peut réinitialiser son mot de passe. 
-* L'utilisateur peut mettre à jour ses informations personnelles (email, adresse postale).
-* Traçabilité sur les événements d'authentification : succès, échec, demande de réinitialisation, renouvellement de jetons, MFA.
-
+* L'utilisateur peut mettre à jour ses informations personnelles (email, adresse postale). 
+* L’utilisateur peut changer un facteur d’authentification (code par mail, TOTP) 
+* L’administrateur peut accéder à la traçabilité sur les événements d'authentification : succès, échec, demande de réinitialisation, renouvellement de jetons, MFA. 
+* L’administrateur peut créer un nouveau compte. 
+* L’administrateur peut supprimer un compte. 
+* L’administrateur peut ajouter une nouvelle ressource. 
+* L’administrateur peut configurer l’accès à une ressource suivant le rôle de l’utilisateur. 
 
 ## Spécifications techniques
-* Utilisation de jeton JWT, contenant les informations de chaque utilisateur (identité, rôles)
-* Base de données pour la gestion des utilisateurs -> SQL.
-* Le MFA est un code aléatoire envoyé par email à l'utilisateur.
-* Protection contre les attaques courantes (injection SQL, XSS).
-* Politique de mot de passe : 15 caractères minimum (majuscules, minuscules, caractères spéciaux) selon l'ANSSI (ANSSI-PG-078).
-* Accès au service via une inteface web en HTTPS.
-* S'adapte en temps réel en fonction du nombre d'utilisateurs connectés.
-* Langages utilisés en Frontend : HTML, CSS, JS
-* Langages utilisés en Backend : FastAPI (Python)
+* Base de données pour la gestion des utilisateurs -> SQL. 
+* Accès au service via une interface web en HTTPS. 
+* Création d’un système d’authentification basé sur un jeton. 
+* Langages utilisés en Frontend : HTML, CSS, JS 
+* Langages utilisés en Backend : FastAPI (Python) 
 
+## Exemples de calls API 
 
 ## Hors périmètre 
 
 * Gestion des utilisateurs (LDAP chez le client)
 * Creation d'un nouveau compte
 
+Annexe 
+* Protection contre les attaques courantes (injection SQL, XSS). 
+* Politique de mot de passe : 15 caractères minimum (majuscules, minuscules, caractères spéciaux) selon l'ANSSI (ANSSI-PG-078). 
+* S'adapte en temps réel en fonction du nombre d'utilisateurs connectés. 
+
+ 
