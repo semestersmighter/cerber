@@ -8,7 +8,6 @@ CERBER est un système d'authentification qui a pour but de sécuriser l'accès 
 * Définir un périmètre : Garantir que seules les personnes autorisées accèdent aux services. 
 * Permettre à l'utilisateur de gérer lui-même son compte (mot de passe oublié, coordonnées, sécurité).
 * Donner aux administrateurs les moyens de gérer les comptes et les droits.
-* 
 
 ## Spécifications fonctionnelles
 
