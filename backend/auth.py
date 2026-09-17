@@ -1,4 +1,5 @@
 import psycopg
+import secrets
 from argon2 import PasswordHasher
 from argon2.exceptions import VerificationError, InvalidHashError
 from fastapi import APIRouter, HTTPException, status
@@ -57,4 +58,15 @@ def login(credentials: LoginRequest):
     except psycopg.OperationalError:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Base de données indisponible")
 
-    return {"message": "Connexion réussie", "nif": user["nif"], "roleID": user["roleID"]}
+    if user is None or not verify_password(user["passwordHash"], credentials.password):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Identifiants invalides")
+
+    # Génération d'un token aléatoire sécurisé
+    token = secrets.token_hex(32)
+    db.create_session(user["nif"], token)
+
+    return {
+        "message": "Connexion réussie",
+        "nif": user["nif"],
+        "token": token
+    }

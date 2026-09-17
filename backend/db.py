@@ -3,6 +3,7 @@ import os
 import psycopg
 from psycopg.rows import dict_row
 
+
 # Défini dans docker-compose.yml ; la valeur par défaut sert en local hors Docker
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://cerber_admin:cerber_secure_pwd@localhost:5432/cerber_db")
 
