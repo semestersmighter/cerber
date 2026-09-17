@@ -5,3 +5,26 @@ services:
     ports:
       - "8000:8000"
     restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      # L'URL de connexion que FastAPI/SQLAlchemy utilisera
+      - DATABASE_URL=postgresql://cerber_admin:cerber_secure_pwd@db:5432/cerber_db
+
+  db:
+    image: postgres:15-alpine
+    container_name: postgres-db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: cerber_admin
+      POSTGRES_PASSWORD: cerber_secure_pwd
+      POSTGRES_DB: cerber_db
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      # Montage du script SQL qui sera exécuté automatiquement au 1er démarrage
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  db-data:
