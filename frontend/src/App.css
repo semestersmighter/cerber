@@ -1,0 +1,52 @@
+#root {
+  min-height: 100vh;
+}
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-container {
+  width: 100%;
+  max-width: 400px;
+  padding: 32px;
+}
+
+.login-container h1 {
+  text-align: center;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  margin-bottom: 6px;
+}
+
+.form-group input {
+  padding: 10px;
+}
+
+button {
+  width: 100%;
+  padding: 10px;
+  cursor: pointer;
+  
+}
+
+
+.app {
+  min-height: 100vh;
+  width: 100%;
+
+  background-image: url('./assets/images/logo.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
