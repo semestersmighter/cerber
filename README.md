@@ -37,7 +37,7 @@ Ce portail doit comprendre les fonctionnalités et prérequis suivants :
 * Gestion des utilisateurs (LDAP chez le client)
 * Creation d'un nouveau compte
 
-Annexe 
+## Annexe 
 * Protection contre les attaques courantes (injection SQL, XSS). 
 * Politique de mot de passe : 15 caractères minimum (majuscules, minuscules, caractères spéciaux) selon l'ANSSI (ANSSI-PG-078). 
 * S'adapte en temps réel en fonction du nombre d'utilisateurs connectés. 
