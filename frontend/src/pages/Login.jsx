@@ -16,7 +16,6 @@ function Login() {
   return (
     <main className="login-page">
       <div className="login-container">
-        <h1>Cerber</h1>
         <p>Connexion à votre compte</p>
 
         <form onSubmit={handleSubmit}>
