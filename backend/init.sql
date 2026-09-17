@@ -35,12 +35,12 @@ INSERT INTO "Role" ("name") VALUES
 ('Agent DGFIP'),
 ('Contribuable');
 
--- Création des utilisateurs (Mots de passe fictifs hashés type Bcrypt)
+-- Création des utilisateurs (Mots de passe fictifs hashés type Argon2)
 INSERT INTO "User" ("nif", "passwordHash", "roleID", "email", "nbTry", "lockDate") VALUES
-('1234567890123', '$2y$10$E1m8.eR./P.qH.WvF9mO.e7wYl9...', 1, 'admin.cerber@dgfip.gouv.fr', 0, NULL),
-('2345678901234', '$2y$10$T2m9.fR./Q.pH.XwG0nP.f8xZm0...', 2, 'agent.dupont@dgfip.gouv.fr', 0, NULL),
-('3456789012345', '$2y$10$U3n0.gS./R.qI.YxH1oQ.g9yAn1...', 3, 'jean.martin@example.com', 0, NULL),
-('4567890123456', '$2y$10$V4o1.hT./S.rJ.ZyI2pR.h0zBo2...', 3, 'hacker.suspect@example.com', 5, CURRENT_TIMESTAMP); -- Compte verrouillé (5 essais)
+('1234567890123', '$argon2id$v=19$m=65536,t=3,p=4$pd6ISI7iLPAbYE280Grjlg$hZpZReMvY6sRRHCGAmmptVjMfeXH1RISkcGr5WhAXbo', 1, 'admin.cerber@dgfip.gouv.fr', 0, NULL),
+('2345678901234', '$argon2id$v=19$m=65536,t=3,p=4$xkW4bB1O8kdg0ZGgEgSenA$Mgo03FELTSSh08Wz5J3maHKqKVAhvpztBnyAIkh9ifE', 2, 'agent.dupont@dgfip.gouv.fr', 0, NULL),
+('3456789012345', '$argon2id$v=19$m=65536,t=3,p=4$WdN7PQln2bToPvA7MjWpRA$gg9nnmYOFsQCDRIsrE0IDiwTMi0iUH8opEnORSYyjpU', 3, 'jean.martin@example.com', 0, NULL),
+('4567890123456', '$argon2id$v=19$m=65536,t=3,p=4$bZs1lPg+P0sJamYWMwlrAg$adoMTPaB5rrSxQKDEav3ILoJML6T8/ggV7BZRIIrb8U', 3, 'hacker.suspect@example.com', 5, CURRENT_TIMESTAMP); -- Compte verrouillé (5 essais)
 
 -- Création des sessions actives
 INSERT INTO "Session" ("sessionToken", "nif", "expireAt", "createdAt") VALUES
