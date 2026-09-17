@@ -1,0 +1,27 @@
+services:
+  backend:
+    build: ./backend
+    container_name: fastapi-backend
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    depends_on:
+      - db
+    # DATABASE_URL (URL de connexion FastAPI/SQLAlchemy) est définie dans .env
+    env_file: .env
+
+  
+  db:
+    image: postgres:15-alpine
+    container_name: postgres-db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    env_file: .env
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      # Montage du script SQL qui sera exécuté automatiquement au 1er démarrage
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  db-data:
