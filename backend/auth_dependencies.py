@@ -16,4 +16,4 @@ def get_current_user(
     if role is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Session invalide ou expirée")
 
-    return role  # {"nif": ..., "roleID": ...}
+    return role  # {"nif": ..., "roleIDs": [...]}
