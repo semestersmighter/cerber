@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import Button from '../components/Button'
+import Input from '../components/Input'
+
 function Mfa() {
   const navigate = useNavigate()
   const [code, setCode] = useState('')
@@ -20,31 +23,24 @@ function Mfa() {
         <h1>Vérification MFA</h1>
 
         <p>
-          Entrez le code à 6 chiffres affiché
-          dans votre application d'authentification.
+          Entrez le code à 6 chiffres affiché dans votre application
+          d'authentification.
         </p>
 
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="code">
-              Code de vérification
-            </label>
+          <Input
+            id="code"
+            label="Code de vérification"
+            type="text"
+            inputMode="numeric"
+            maxLength={6}
+            pattern="[0-9]{6}"
+            value={code}
+            onChange={(event) => setCode(event.target.value)}
+            required
+          />
 
-            <input
-              id="code"
-              type="text"
-              inputMode="numeric"
-              maxLength="6"
-              pattern="[0-9]{6}"
-              value={code}
-              onChange={(event) => setCode(event.target.value)}
-              required
-            />
-          </div>
-
-          <button type="submit">
-            Vérifier
-          </button>
+          <Button type="submit">Vérifier</Button>
         </form>
       </div>
     </main>

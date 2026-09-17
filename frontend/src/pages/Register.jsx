@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
+import Button from '../components/Button'
+import Input from '../components/Input'
+
 function Register() {
   const navigate = useNavigate()
 
@@ -16,10 +19,7 @@ function Register() {
       return
     }
 
-    console.log({
-      email,
-      password,
-    })
+    console.log({ email, password })
 
     // Plus tard : appel API
     navigate('/')
@@ -32,52 +32,38 @@ function Register() {
         <p>Rejoignez Cerber</p>
 
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              required
-            />
-          </div>
+          <Input
+            id="email"
+            label="Email"
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            required
+          />
 
-          <div className="form-group">
-            <label htmlFor="password">Mot de passe</label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-            />
-          </div>
+          <Input
+            id="password"
+            label="Mot de passe"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            required
+          />
 
-          <div className="form-group">
-            <label htmlFor="confirmPassword">
-              Confirmer le mot de passe
-            </label>
+          <Input
+            id="confirmPassword"
+            label="Confirmer le mot de passe"
+            type="password"
+            value={confirmPassword}
+            onChange={(event) => setConfirmPassword(event.target.value)}
+            required
+          />
 
-            <input
-              id="confirmPassword"
-              type="password"
-              value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
-              required
-            />
-          </div>
-
-          <button type="submit">
-            Créer mon compte
-          </button>
+          <Button type="submit">Créer mon compte</Button>
         </form>
 
         <p>
-          Déjà un compte ?{' '}
-          <Link to="/">
-            Se connecter
-          </Link>
+          Déjà un compte ? <Link to="/">Se connecter</Link>
         </p>
       </div>
     </main>

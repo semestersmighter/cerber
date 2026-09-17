@@ -1,5 +1,8 @@
 import { useState } from 'react'
 
+import Button from '../components/Button'
+import Input from '../components/Input'
+
 function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -7,43 +10,34 @@ function Login() {
   const handleSubmit = (event) => {
     event.preventDefault()
 
-    console.log({
-      email,
-      password,
-    })
+    console.log({ email, password })
   }
 
   return (
-    <main className="login-page">
-      <div className="login-container">
+    <main className="auth-page">
+      <div className="auth-container">
         <p>Connexion à votre compte</p>
 
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              required
-            />
-          </div>
+          <Input
+            id="email"
+            label="Email"
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            required
+          />
 
-          <div className="form-group">
-            <label htmlFor="password">Mot de passe</label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-            />
-          </div>
+          <Input
+            id="password"
+            label="Mot de passe"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            required
+          />
 
-          <button type="submit">
-            Se connecter
-          </button>
+          <Button type="submit">Se connecter</Button>
         </form>
       </div>
     </main>
