@@ -10,6 +10,7 @@ services:
     # DATABASE_URL (URL de connexion FastAPI/SQLAlchemy) est définie dans .env
     env_file: .env
 
+  
   db:
     image: postgres:15-alpine
     container_name: postgres-db
