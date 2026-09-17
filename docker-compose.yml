@@ -1,0 +1,9 @@
+services:
+  frontend:
+    build: ./frontend
+    container_name: html-frontend
+    ports:
+      - "8080:80"
+    # depends_on:
+    #   - backend
+    restart: unless-stopped
