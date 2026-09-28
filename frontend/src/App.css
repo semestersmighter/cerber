@@ -64,3 +64,13 @@ button {
   object-fit: contain;
   cursor: pointer;
 }
+
+.form-error {
+  color: #b42318;
+  margin-bottom: 12px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}

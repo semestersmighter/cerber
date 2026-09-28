@@ -19,8 +19,6 @@ function Register() {
       return
     }
 
-    console.log({ email, password })
-
     // Plus tard : appel API
     navigate('/')
   }
