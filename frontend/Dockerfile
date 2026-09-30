@@ -1,23 +1,17 @@
-# ---- Build stage ----
-FROM docker.io/library/node:22-alpine AS builder
+FROM nginx:alpine
 
-WORKDIR /app
+# Certificat TLS auto-signé pour le développement
+RUN apk add --no-cache openssl \
+ && mkdir -p /etc/nginx/certs \
+ && openssl req -x509 -nodes -newkey rsa:2048 -days 365 \
+      -subj "/CN=localhost" -addext "subjectAltName=DNS:localhost,IP:127.0.0.1" \
+      -keyout /etc/nginx/certs/cerber.key -out /etc/nginx/certs/cerber.crt
 
-COPY package.json package-lock.json ./
-RUN npm ci
+# La configuration est générée au démarrage à partir de HOST_HEADER, ALLOWED_HOSTS et HTTPS_PORT
+COPY nginx.conf.template /etc/nginx/cerber/nginx.conf.template
+COPY docker-entrypoint.d/30-cerber-config.sh /docker-entrypoint.d/30-cerber-config.sh
+RUN chmod +x /docker-entrypoint.d/30-cerber-config.sh
 
-COPY . .
-RUN npm run build
+COPY public /usr/share/nginx/html
 
-
-# ---- Runtime stage ----
-FROM docker.io/library/nginx:alpine
-
-RUN rm -rf /usr/share/nginx/html/*
-
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=builder /app/dist /usr/share/nginx/html
-
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 80 443

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mon compte · CERBER</title>
+  <link rel="icon" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/app.js" defer></script>
+  <script src="/js/account.js" defer></script>
+</head>
+<body data-auth="required" hidden>
+  <header>
+    <nav>
+      <a class="brand" href="/services.html">CERBER</a>
+      <a href="/services.html">Mes services</a>
+      <a href="/account.html">Mon compte</a>
+      <a href="/admin.html" data-admin hidden>Administration</a>
+      <button type="button" id="logout" class="link-button">Déconnexion</button>
+    </nav>
+  </header>
+  <main>
+    <h1>Mon compte</h1>
+    <p id="identity"></p>
+
+    <h2>Informations personnelles</h2>
+    <form id="profile-form">
+      <label>Email
+        <input name="email" type="email" autocomplete="email" required>
+      </label>
+      <label>Adresse postale
+        <input name="address" autocomplete="street-address" maxlength="500">
+      </label>
+      <div><button type="submit">Enregistrer</button></div>
+      <p class="msg" role="status"></p>
+    </form>
+
+    <h2>Mot de passe</h2>
+    <form id="password-form">
+      <label>Mot de passe actuel
+        <input name="current_password" type="password" autocomplete="current-password" required>
+      </label>
+      <label>Nouveau mot de passe
+        <input name="new_password" type="password" autocomplete="new-password" minlength="15" required>
+      </label>
+      <p class="hint">15 caractères minimum, avec majuscule, minuscule, chiffre et caractère spécial.</p>
+      <label>Confirmation
+        <input name="confirm" type="password" autocomplete="new-password" required>
+      </label>
+      <div><button type="submit">Changer le mot de passe</button></div>
+      <p class="msg" role="status"></p>
+    </form>
+
+    <h2>Application d'authentification</h2>
+    <p class="muted">Pour utiliser un nouveau téléphone, confirmez votre mot de passe puis scannez le nouveau QR code.
+      L'ancienne application reste valable tant que la nouvelle n'est pas confirmée.</p>
+    <form id="totp-renew-form">
+      <label>Mot de passe
+        <input name="password" type="password" autocomplete="current-password" required>
+      </label>
+      <div><button type="submit">Changer d'application</button></div>
+      <p class="msg" role="status"></p>
+    </form>
+
+    <section id="totp-setup" hidden>
+      <div class="qr">
+        <div class="qr-image"></div>
+        <span class="secret"></span>
+      </div>
+      <form id="totp-confirm-form">
+        <label>Code affiché par la nouvelle application
+          <input name="code" class="code" inputmode="numeric" pattern="\d{6}" maxlength="6" autocomplete="one-time-code" required>
+        </label>
+        <div><button type="submit">Confirmer</button></div>
+        <p class="msg" role="status"></p>
+      </form>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Taux d'imposition · CERBER</title>
+  <link rel="icon" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/app.js" defer></script>
+  <script src="/js/taux.js" defer></script>
+</head>
+<body data-auth="required" hidden>
+  <header>
+    <nav>
+      <a class="brand" href="/services.html">CERBER</a>
+      <a href="/services.html">Mes services</a>
+      <a href="/account.html">Mon compte</a>
+      <a href="/admin.html" data-admin hidden>Administration</a>
+      <button type="button" id="logout" class="link-button">Déconnexion</button>
+    </nav>
+  </header>
+  <main class="wide">
+    <h1>Taux d'imposition</h1>
+    <p>Taux de prélèvement à la source des contribuables (0 à 60 %, une décimale). Chaque modification est tracée.</p>
+
+    <form id="search-form" class="inline">
+      <label>NIF
+        <input name="nif" inputmode="numeric" pattern="\d{0,13}" maxlength="13" title="chiffres uniquement">
+      </label>
+      <button type="submit" class="ghost">Rechercher</button>
+      <p class="msg" role="status"></p>
+    </form>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>NIF</th><th>Email</th><th>Dernière modification</th><th>Taux (%)</th></tr></thead>
+        <tbody id="taxpayers"></tbody>
+      </table>
+    </div>
+    <p class="muted" id="empty" hidden>Aucun contribuable trouvé.</p>
+  </main>
+</body>
+</html>

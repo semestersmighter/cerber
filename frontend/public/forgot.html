@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mot de passe oublié · CERBER</title>
+  <link rel="icon" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/app.js" defer></script>
+  <script src="/js/forgot.js" defer></script>
+</head>
+<body>
+  <main class="narrow">
+    <a class="brand" href="/">CERBER</a>
+    <h1>Mot de passe oublié</h1>
+    <p>Votre application d'authentification suffit pour choisir un nouveau mot de passe.</p>
+
+    <form id="forgot-form">
+      <label>Numéro fiscal
+        <input name="nif" inputmode="numeric" pattern="\d{13}" maxlength="13" autocomplete="username" required title="13 chiffres">
+      </label>
+      <label>Code de vérification
+        <input name="code" class="code" inputmode="numeric" pattern="\d{6}" maxlength="6" autocomplete="one-time-code" required>
+      </label>
+      <label>Nouveau mot de passe
+        <input name="new_password" type="password" autocomplete="new-password" minlength="15" required>
+      </label>
+      <p class="hint">15 caractères minimum, avec majuscule, minuscule, chiffre et caractère spécial.</p>
+      <label>Confirmation
+        <input name="confirm" type="password" autocomplete="new-password" required>
+      </label>
+      <button type="submit">Réinitialiser</button>
+      <p class="msg" role="alert"></p>
+    </form>
+
+    <p><a href="/">Retour à la connexion</a></p>
+  </main>
+</body>
+</html>

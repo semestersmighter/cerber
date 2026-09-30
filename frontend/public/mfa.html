@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vérification · CERBER</title>
+  <link rel="icon" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/app.js" defer></script>
+  <script src="/js/mfa.js" defer></script>
+</head>
+<body>
+  <main class="narrow">
+    <a class="brand" href="/">CERBER</a>
+    <h1>Vérification</h1>
+    <p id="intro">Saisissez le code à 6 chiffres affiché dans votre application d'authentification.</p>
+
+    <!-- Première connexion : enregistrement de l'application TOTP -->
+    <section id="setup" hidden>
+      <div class="qr">
+        <div class="qr-image"></div>
+        <span class="secret"></span>
+      </div>
+    </section>
+
+    <form id="mfa-form">
+      <label>Code de vérification
+        <input name="code" class="code" inputmode="numeric" pattern="\d{6}" maxlength="6" autocomplete="one-time-code" required autofocus>
+      </label>
+      <button type="submit">Valider</button>
+      <p class="msg" role="alert"></p>
+    </form>
+
+    <p><a href="/">Retour</a></p>
+  </main>
+</body>
+</html>

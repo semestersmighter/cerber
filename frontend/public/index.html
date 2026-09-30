@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Connexion · CERBER</title>
+  <link rel="icon" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/app.js" defer></script>
+  <script src="/js/login.js" defer></script>
+</head>
+<body>
+  <main class="narrow">
+    <span class="brand">CERBER</span>
+    <h1>Connexion</h1>
+    <p>Accédez à vos services avec votre numéro fiscal.</p>
+
+    <form id="login-form">
+      <label>Numéro fiscal
+        <input name="nif" inputmode="numeric" pattern="\d{13}" maxlength="13" autocomplete="username" required autofocus
+               title="13 chiffres">
+      </label>
+      <label>Mot de passe
+        <input name="password" type="password" autocomplete="current-password" required>
+      </label>
+      <button type="submit">Continuer</button>
+      <p class="msg" role="alert"></p>
+    </form>
+
+    <p><a href="/forgot.html">Mot de passe oublié ?</a></p>
+  </main>
+</body>
+</html>

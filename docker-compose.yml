@@ -1,37 +1,73 @@
 services:
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: html-frontend
+    build: ./frontend
+    container_name: cerber-frontend
     ports:
-      - "8080:80"
-    # depends_on:
-    #   - backend
+      - "${HTTP_PORT:-8080}:80"     # redirige vers HTTPS
+      - "${HTTPS_PORT:-8443}:443"
+    environment:
+      HOST_HEADER: ${HOST_HEADER:-host}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-*}
+      HTTPS_PORT: ${HTTPS_PORT:-8443}
+    depends_on:
+      - backend
+      - svc-impots
+      - svc-intranet
+      - svc-ficoba
     restart: unless-stopped
+
   backend:
     build: ./backend
-    container_name: fastapi-backend
-    ports:
-      - "8000:8000"
-    restart: unless-stopped
-    depends_on:
-      - db
-    # DATABASE_URL (URL de connexion FastAPI/SQLAlchemy) est définie dans .env
+    container_name: cerber-backend
     env_file: .env
+    # Pas de port publié : l'API n'est joignable qu'à travers nginx (/api)
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
 
-  
+  # ---- Services protégés par CERBER (même image, un conteneur par service) ----
+  # Aucun port publié : ils ne sont joignables qu'à travers nginx.
+  svc-impots:
+    build: ./services
+    container_name: cerber-svc-impots
+    environment:
+      SERVICE_SLUG: impots
+      CERBER_API: http://backend:8000
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-*}
+    restart: unless-stopped
+
+  svc-intranet:
+    build: ./services
+    container_name: cerber-svc-intranet
+    environment:
+      SERVICE_SLUG: intranet
+      CERBER_API: http://backend:8000
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-*}
+    restart: unless-stopped
+
+  svc-ficoba:
+    build: ./services
+    container_name: cerber-svc-ficoba
+    environment:
+      SERVICE_SLUG: ficoba
+      CERBER_API: http://backend:8000
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-*}
+    restart: unless-stopped
+
   db:
     image: postgres:15-alpine
-    container_name: postgres-db
-    restart: unless-stopped
-    ports:
-      - "5432:5432"
+    container_name: cerber-db
     env_file: .env
     volumes:
       - db-data:/var/lib/postgresql/data
-      # Montage du script SQL qui sera exécuté automatiquement au 1er démarrage
-      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+      # Exécuté automatiquement au premier démarrage (base vide)
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 3s
+      retries: 20
+    restart: unless-stopped
 
 volumes:
   db-data:
