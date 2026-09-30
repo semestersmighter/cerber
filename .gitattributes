@@ -1,0 +1,9 @@
+# Fins de ligne LF dans le dépôt, quel que soit l'OS
+* text=auto
+
+# Fichiers exécutés ou lus dans les conteneurs Linux : toujours LF, même sous Windows
+*.sh        text eol=lf
+*.template  text eol=lf
+Dockerfile  text eol=lf
+*.sql       text eol=lf
+.env*       text eol=lf
