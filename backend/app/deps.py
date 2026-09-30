@@ -56,6 +56,32 @@ def require_admin(user: CurrentUser = Depends(current_user)) -> CurrentUser:
     return user
 
 
+def resource_access(nif: str, slug: str):
+    """Ressource et droit d'accès de l'utilisateur ("allowed"), ou None si elle n'existe pas."""
+    return db.fetch_one(
+        '''
+        SELECT r."slug", r."name", r."url",
+               EXISTS (
+                   SELECT 1 FROM "ResourceRole" rr
+                   JOIN "UserRole" ur ON ur."roleID" = rr."roleID"
+                   WHERE rr."resourceID" = r."resourceID" AND ur."nif" = %s
+               ) AS "allowed"
+        FROM "Resource" r WHERE r."slug" = %s
+        ''',
+        (nif, slug),
+    )
+
+
+def require_resource(slug: str):
+    """Réserve une route aux rôles autorisés sur la ressource `slug` (droits configurés par l'administrateur)."""
+    def dependency(user: CurrentUser = Depends(current_user)) -> CurrentUser:
+        resource = resource_access(user.nif, slug)
+        if resource is None or not resource["allowed"]:
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "Accès refusé pour vos rôles")
+        return user
+    return dependency
+
+
 def _cookie_path(name: str) -> str:
     # Le cookie de session est envoyé à tout le site pour que les services protégés
     # (/impots, /intranet, /ficoba) le reçoivent ; le cookie MFA reste limité à l'API.

@@ -16,7 +16,12 @@ router = APIRouter(prefix="/api/me", tags=["utilisateur"])
 @router.get("")
 def me(user: CurrentUser = Depends(current_user)):
     row = db.fetch_one(
-        'SELECT "nif", "email", "address", "totpSecret" IS NOT NULL AS "totp_enabled" FROM "User" WHERE "nif" = %s',
+        '''
+        SELECT u."nif", u."email", u."address", u."totpSecret" IS NOT NULL AS "totp_enabled",
+               t."rate"::float8 AS "tax_rate"
+        FROM "User" u LEFT JOIN "TaxRate" t ON t."nif" = u."nif"
+        WHERE u."nif" = %s
+        ''',
         (user.nif,),
     )
     return {**row, "roles": user.roles, "is_admin": user.is_admin}

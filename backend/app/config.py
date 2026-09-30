@@ -32,3 +32,4 @@ ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "*").split(",") i
 TOTP_ISSUER = os.getenv("TOTP_ISSUER", "CERBER")
 
 ADMIN_ROLE = "Administrateur"
+TAXPAYER_ROLE = "Contribuable"

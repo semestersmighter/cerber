@@ -5,26 +5,15 @@ Appelé par les services protégés (SSO) avec l'en-tête
 """
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
-from .. import db, events
-from ..deps import CurrentUser, current_user
+from .. import events
+from ..deps import CurrentUser, current_user, resource_access
 
 router = APIRouter(prefix="/api/access", tags=["contrôle d'accès"])
 
 
 @router.get("/{slug}")
 def check_access(slug: str, request: Request, user: CurrentUser = Depends(current_user)):
-    resource = db.fetch_one(
-        '''
-        SELECT r."slug", r."name", r."url",
-               EXISTS (
-                   SELECT 1 FROM "ResourceRole" rr
-                   JOIN "UserRole" ur ON ur."roleID" = rr."roleID"
-                   WHERE rr."resourceID" = r."resourceID" AND ur."nif" = %s
-               ) AS "allowed"
-        FROM "Resource" r WHERE r."slug" = %s
-        ''',
-        (user.nif, slug),
-    )
+    resource = resource_access(user.nif, slug)
     if resource is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Ressource inconnue")
 

@@ -1,4 +1,6 @@
 """Modèles de requêtes (validation automatique par Pydantic)."""
+from decimal import Decimal
+
 from pydantic import BaseModel, Field
 
 NIF = Field(pattern=r"^\d{13}$", description="Numéro fiscal (13 chiffres)")
@@ -56,3 +58,8 @@ class ResourceIn(BaseModel):
 
 class RoleIdsIn(BaseModel):
     role_ids: list[int]
+
+
+class TaxRateIn(BaseModel):
+    # Taux du prélèvement à la source, en %, une décimale (ex. 7.5)
+    rate: Decimal = Field(ge=0, le=60, max_digits=3, decimal_places=1)

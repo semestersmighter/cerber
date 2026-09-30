@@ -73,6 +73,14 @@ CREATE TABLE "AuthEvent" (
 );
 CREATE INDEX "AuthEvent_createdAt_idx" ON "AuthEvent"("createdAt" DESC);
 
+-- Taux de prélèvement à la source des contribuables (modifié par les agents)
+CREATE TABLE "TaxRate" (
+    "nif"       VARCHAR(13)  PRIMARY KEY REFERENCES "User"("nif") ON DELETE CASCADE,
+    "rate"      NUMERIC(3,1) NOT NULL CHECK ("rate" BETWEEN 0 AND 60),
+    "updatedBy" VARCHAR(13)  NULL REFERENCES "User"("nif") ON DELETE SET NULL,
+    "updatedAt" TIMESTAMPTZ  NOT NULL DEFAULT now()
+);
+
 -- ==========================================
 -- DONNÉES DE DÉMONSTRATION (environnement de dev uniquement)
 -- Mots de passe : voir README
@@ -100,9 +108,16 @@ INSERT INTO "Resource" ("slug", "name", "url") VALUES
 -- Chemins relatifs : les liens suivent l'adresse utilisée pour ouvrir le portail.
 ('impots', 'Espace particulier', '/impots/'),
 ('intranet', 'Intranet DGFIP', '/intranet/'),
-('ficoba', 'FICOBA', '/ficoba/');
+('ficoba', 'FICOBA', '/ficoba/'),
+-- Page du portail : modification des taux d'imposition
+('taux', 'Taux d''imposition', '/taux.html');
 
 INSERT INTO "ResourceRole" ("resourceID", "roleID") VALUES
 (1, 2), (1, 3),   -- Espace particulier : agents et contribuables
 (2, 1), (2, 2),   -- Intranet : administrateurs et agents
-(3, 2);           -- FICOBA : agents uniquement
+(3, 2),           -- FICOBA : agents uniquement
+(4, 2);           -- Taux d'imposition : agents uniquement
+
+INSERT INTO "TaxRate" ("nif", "rate") VALUES
+('3456789012345', 7.5),
+('4567890123456', 0);

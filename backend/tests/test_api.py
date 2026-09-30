@@ -232,6 +232,48 @@ def test_admin_users_resources_and_events():
         assert failures and all(not e["success"] for e in failures)
 
 
+def test_agent_updates_tax_rate():
+    with client() as c:
+        login(c, *CONTRIB)
+        assert c.get("/api/me").json()["tax_rate"] == 7.5
+        # un contribuable ne modifie pas son taux
+        assert c.put(f"/api/tax/taxpayers/{CONTRIB[0]}", json={"rate": 0}).status_code == 403
+
+    with client() as c:
+        login(c, *AGENT)
+        taxpayers = {t["nif"]: t for t in c.get("/api/tax/taxpayers").json()}
+        assert set(taxpayers) == {CONTRIB[0], LOCKED[0]}  # uniquement des contribuables
+        assert c.get("/api/tax/taxpayers", params={"nif": "345"}).json()[0]["nif"] == CONTRIB[0]
+        assert c.get("/api/tax/taxpayers", params={"nif": "3%"}).status_code == 422
+
+        assert c.put(f"/api/tax/taxpayers/{CONTRIB[0]}", json={"rate": 61}).status_code == 422
+        assert c.put(f"/api/tax/taxpayers/{CONTRIB[0]}", json={"rate": 7.55}).status_code == 422
+        assert c.put(f"/api/tax/taxpayers/{ADMIN[0]}", json={"rate": 10}).status_code == 404
+        assert c.put(f"/api/tax/taxpayers/{AGENT[0]}", json={"rate": 10}).status_code == 403
+        r = c.put(f"/api/tax/taxpayers/{CONTRIB[0]}", json={"rate": 12.4})
+        assert r.status_code == 200 and r.json()["rate"] == 12.4
+
+    with client() as c:
+        login(c, *CONTRIB)
+        assert c.get("/api/me").json()["tax_rate"] == 12.4
+
+    with client() as c:
+        login(c, *ADMIN)
+        # l'administrateur ne modifie pas les taux...
+        assert c.get("/api/tax/taxpayers").status_code == 403
+        events = c.get("/api/admin/events", params={"type": "TAX_RATE"}).json()["events"]
+        assert events[0]["nif"] == AGENT[0] and "7.5 % -> 12.4 %" in events[0]["detail"]
+        # ...mais il choisit les rôles qui en ont le droit
+        roles = {r["name"]: r["id"] for r in c.get("/api/admin/roles").json()}
+        taux = next(r for r in c.get("/api/admin/resources").json() if r["slug"] == "taux")
+        c.put(f"/api/admin/resources/{taux['id']}/roles", json={"role_ids": [roles["Administrateur"]]})
+        assert c.get("/api/tax/taxpayers").status_code == 200
+
+    with client() as c:
+        login(c, *AGENT)
+        assert c.put(f"/api/tax/taxpayers/{CONTRIB[0]}", json={"rate": 5}).status_code == 403
+
+
 def test_logout():
     with client() as c:
         login(c, *ADMIN)
@@ -239,12 +281,12 @@ def test_logout():
         assert c.get("/api/me").status_code == 401
 
 
-# Matrice des droits attendue pour les 3 services simulés (conteneurs svc-*)
+# Matrice des droits attendue pour les 3 services simulés (conteneurs svc-*) et la page des taux
 ACCESS_MATRIX = {
-    #            impots intranet ficoba
-    ADMIN:   (False, True,  False),
-    AGENT:   (True,  True,  True),
-    CONTRIB: (True,  False, False),
+    #            impots intranet ficoba taux
+    ADMIN:   (False, True,  False, False),
+    AGENT:   (True,  True,  True,  True),
+    CONTRIB: (True,  False, False, False),
 }
 
 
@@ -254,6 +296,6 @@ def test_access_matrix(user):
     secrets_by_nif.clear()
     with client() as c:
         login(c, *user)
-        for slug, expected in zip(("impots", "intranet", "ficoba"), ACCESS_MATRIX[user]):
+        for slug, expected in zip(("impots", "intranet", "ficoba", "taux"), ACCESS_MATRIX[user]):
             status = c.get(f"/api/access/{slug}").status_code
             assert status == (200 if expected else 403), f"{user[0]} -> {slug}: {status}"
