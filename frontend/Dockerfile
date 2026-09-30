@@ -10,7 +10,9 @@ RUN apk add --no-cache openssl \
 # La configuration est générée au démarrage à partir de HOST_HEADER, ALLOWED_HOSTS et HTTPS_PORT
 COPY nginx.conf.template /etc/nginx/cerber/nginx.conf.template
 COPY docker-entrypoint.d/30-cerber-config.sh /docker-entrypoint.d/30-cerber-config.sh
-RUN chmod +x /docker-entrypoint.d/30-cerber-config.sh
+# Retire les fins de ligne Windows (CRLF) éventuelles : sinon le script ne démarre pas
+RUN sed -i 's/\r$//' /docker-entrypoint.d/30-cerber-config.sh /etc/nginx/cerber/nginx.conf.template \
+ && chmod +x /docker-entrypoint.d/30-cerber-config.sh
 
 COPY public /usr/share/nginx/html
 
