@@ -113,6 +113,45 @@ docker compose up -d --build
 > `init.sql` n'est exécuté que si la base est vide. Après une modification du schéma :
 > `docker compose down -v && docker compose up -d --build`.
 
+### Images publiées (GitHub Container Registry)
+
+Les images sont construites et publiées sur `ghcr.io` par GitHub Actions
+(`.github/workflows/docker-publish.yml`), pour amd64 et arm64 :
+
+| Image | Contenu |
+|---|---|
+| `ghcr.io/semestersmighter/cerber-frontend` | nginx + pages HTML |
+| `ghcr.io/semestersmighter/cerber-backend` | API FastAPI |
+| `ghcr.io/semestersmighter/cerber-services` | services protégés (impots, intranet, ficoba) |
+
+| Événement | Tags publiés |
+|---|---|
+| push sur `main` | `latest`, `sha-<commit>` |
+| tag `v1.2.0` | `1.2.0`, `1.2`, `sha-<commit>` |
+| pull request | aucun (construction seule) |
+
+Lancer CERBER sans rien construire (il faut `docker-compose.yml`, `backend/init.sql` et `.env`) :
+
+```bash
+docker compose pull          # CERBER_TAG dans .env choisit la version (latest par défaut)
+docker compose up -d
+```
+
+Publier une version : `git tag v1.0.0 && git push origin v1.0.0`.
+
+Publication manuelle (sans GitHub Actions), avec un jeton GitHub ayant le droit `write:packages` :
+
+```bash
+echo <jeton> | docker login ghcr.io -u <utilisateur-github> --password-stdin
+docker compose build && docker compose push frontend backend svc-impots
+```
+
+> Les paquets sont privés à leur création : pour un `pull` sans connexion, les passer en public
+> dans GitHub (profil → Packages → paquet → Package settings → Change visibility).
+
+Aucune clé n'est incluse dans l'image du frontend : le certificat auto-signé est créé au premier
+démarrage et conservé dans le volume `certs`. Pour un vrai certificat, y placer `cerber.crt` et `cerber.key`.
+
 ### Nom d'hôte et en-têtes (`.env`)
 
 | Variable | Valeurs | Rôle |
