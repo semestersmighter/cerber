@@ -1,5 +1,9 @@
+# Images publiées sur GitHub Container Registry (voir .github/workflows/docker-publish.yml).
+#   docker compose pull && docker compose up -d   -> images du registre
+#   docker compose up -d --build                  -> images construites en local
 services:
   frontend:
+    image: ${CERBER_REGISTRY:-ghcr.io/semestersmighter}/cerber-frontend:${CERBER_TAG:-latest}
     build: ./frontend
     container_name: cerber-frontend
     ports:
@@ -9,6 +13,9 @@ services:
       HOST_HEADER: ${HOST_HEADER:-host}
       ALLOWED_HOSTS: ${ALLOWED_HOSTS:-*}
       HTTPS_PORT: ${HTTPS_PORT:-8443}
+    volumes:
+      # Certificat TLS conservé entre les recréations du conteneur (auto-signé s'il est absent)
+      - certs:/etc/nginx/certs
     depends_on:
       - backend
       - svc-impots
@@ -17,6 +24,7 @@ services:
     restart: unless-stopped
 
   backend:
+    image: ${CERBER_REGISTRY:-ghcr.io/semestersmighter}/cerber-backend:${CERBER_TAG:-latest}
     build: ./backend
     container_name: cerber-backend
     env_file: .env
@@ -29,6 +37,7 @@ services:
   # ---- Services protégés par CERBER (même image, un conteneur par service) ----
   # Aucun port publié : ils ne sont joignables qu'à travers nginx.
   svc-impots:
+    image: ${CERBER_REGISTRY:-ghcr.io/semestersmighter}/cerber-services:${CERBER_TAG:-latest}
     build: ./services
     container_name: cerber-svc-impots
     environment:
@@ -38,6 +47,7 @@ services:
     restart: unless-stopped
 
   svc-intranet:
+    image: ${CERBER_REGISTRY:-ghcr.io/semestersmighter}/cerber-services:${CERBER_TAG:-latest}
     build: ./services
     container_name: cerber-svc-intranet
     environment:
@@ -47,6 +57,7 @@ services:
     restart: unless-stopped
 
   svc-ficoba:
+    image: ${CERBER_REGISTRY:-ghcr.io/semestersmighter}/cerber-services:${CERBER_TAG:-latest}
     build: ./services
     container_name: cerber-svc-ficoba
     environment:
@@ -71,3 +82,4 @@ services:
 
 volumes:
   db-data:
+  certs:
