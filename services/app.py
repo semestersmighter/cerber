@@ -108,11 +108,6 @@ def page(title: str, body: str, status: int = 200) -> HTMLResponse:
     )
 
 
-@app.get("/health")
-def health():
-    return {"status": "ok", "service": SLUG}
-
-
 @app.get(f"/{SLUG}")
 @app.get(f"/{SLUG}/{{path:path}}")
 def protected(request: Request, path: str = ""):
