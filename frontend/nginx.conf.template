@@ -1,0 +1,95 @@
+# Modèle de configuration : les marqueurs @@...@@ sont remplacés au démarrage
+# du conteneur par docker-entrypoint.d/30-cerber-config.sh, à partir de :
+#   HOST_HEADER    host | x-forwarded-host  (en-tête qui donne le nom d'hôte public)
+#   ALLOWED_HOSTS  noms d'hôte acceptés, séparés par des virgules ("*" = tous)
+#   HTTPS_PORT     port HTTPS public, utilisé pour la redirection depuis HTTP
+
+# ---------- Nom d'hôte public ----------
+
+# Hôte public lu dans l'en-tête choisi par HOST_HEADER (repli sur Host s'il est absent)
+map @@HOST_SOURCE@@ $public_host {
+    ""      $host;
+    default @@HOST_SOURCE@@;
+}
+
+# Nom sans le port, pour la comparaison avec ALLOWED_HOSTS
+map $public_host $public_host_name {
+    "~^(?<name>[^:]+)(:\d+)?$" $name;
+    default                    $public_host;
+}
+
+# 1 si l'hôte est autorisé
+map $public_host_name $host_allowed {
+@@HOST_RULES@@
+}
+
+# ---------- HTTP -> HTTPS ----------
+
+server {
+    listen 80;
+    server_name _;
+
+    if ($host_allowed = 0) { return 421; }
+    return 301 https://$public_host_name@@HTTPS_PORT_SUFFIX@@$request_uri;
+}
+
+# ---------- HTTPS ----------
+
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name _;
+
+    # Certificat auto-signé généré à la construction de l'image (à remplacer en production)
+    ssl_certificate     /etc/nginx/certs/cerber.crt;
+    ssl_certificate_key /etc/nginx/certs/cerber.key;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+
+    root  /usr/share/nginx/html;
+    index index.html;
+
+    server_tokens off;
+
+    # Hôte non autorisé : 421 Misdirected Request
+    if ($host_allowed = 0) { return 421; }
+
+    # En-têtes de sécurité
+    add_header Strict-Transport-Security "max-age=31536000" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "no-referrer" always;
+    add_header X-Frame-Options "DENY" always;
+
+    # En-têtes transmis au backend et aux services : Host = hôte public validé
+    proxy_set_header Host              $public_host;
+    proxy_set_header X-Forwarded-Host  $public_host;
+    proxy_set_header X-Real-IP         $remote_addr;
+    proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto https;
+
+    # API FastAPI (même origine : pas de CORS, cookies SameSite=Strict)
+    location /api/ {
+        proxy_pass http://backend:8000;
+    }
+
+    # Documentation Swagger : autorise le CDN utilisé par FastAPI
+    location = /api/docs {
+        proxy_pass http://backend:8000;
+        add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' data: https://fastapi.tiangolo.com" always;
+    }
+
+    # Services protégés : chacun vérifie lui-même l'accès auprès de CERBER
+    location /impots {
+        proxy_pass http://svc-impots:8000;
+    }
+    location /intranet {
+        proxy_pass http://svc-intranet:8000;
+    }
+    location /ficoba {
+        proxy_pass http://svc-ficoba:8000;
+    }
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}

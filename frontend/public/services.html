@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mes services · CERBER</title>
+  <link rel="icon" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/app.js" defer></script>
+  <script src="/js/services.js" defer></script>
+</head>
+<body data-auth="required" hidden>
+  <header>
+    <nav>
+      <a class="brand" href="/services.html">CERBER</a>
+      <a href="/services.html">Mes services</a>
+      <a href="/account.html">Mon compte</a>
+      <a href="/admin.html" data-admin hidden>Administration</a>
+      <button type="button" id="logout" class="link-button">Déconnexion</button>
+    </nav>
+  </header>
+  <main>
+    <h1>Mes services</h1>
+    <p>Services auxquels vos rôles vous donnent accès.</p>
+    <ul class="services" id="services"></ul>
+    <p class="muted" id="empty" hidden>Aucun service n'est ouvert à vos rôles pour le moment.</p>
+  </main>
+</body>
+</html>

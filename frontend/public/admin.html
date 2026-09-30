@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Administration · CERBER</title>
+  <link rel="icon" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/app.js" defer></script>
+  <script src="/js/admin.js" defer></script>
+</head>
+<body data-auth="required" hidden>
+  <header>
+    <nav>
+      <a class="brand" href="/services.html">CERBER</a>
+      <a href="/services.html">Mes services</a>
+      <a href="/account.html">Mon compte</a>
+      <a href="/admin.html" data-admin hidden>Administration</a>
+      <button type="button" id="logout" class="link-button">Déconnexion</button>
+    </nav>
+  </header>
+  <main class="wide">
+    <h1>Administration</h1>
+    <p><a href="#comptes">Comptes</a> · <a href="#ressources">Ressources</a> · <a href="#journal">Journal</a></p>
+
+    <h2 id="comptes">Comptes</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>NIF</th><th>Email</th><th>Rôles</th><th>État</th><th></th></tr></thead>
+        <tbody id="users"></tbody>
+      </table>
+    </div>
+    <p class="msg" id="users-msg" role="status"></p>
+
+    <h3>Nouveau compte</h3>
+    <form id="user-form">
+      <label>Numéro fiscal
+        <input name="nif" inputmode="numeric" pattern="\d{13}" maxlength="13" required title="13 chiffres">
+      </label>
+      <label>Email
+        <input name="email" type="email" required>
+      </label>
+      <label>Adresse postale
+        <input name="address" maxlength="500">
+      </label>
+      <label>Mot de passe provisoire
+        <input name="password" type="password" autocomplete="new-password" minlength="15" required>
+      </label>
+      <p class="hint">L'utilisateur enregistrera son application TOTP à sa première connexion.</p>
+      <fieldset><legend>Rôles</legend><div class="checks" data-roles="role_ids"></div></fieldset>
+      <div><button type="submit">Créer le compte</button></div>
+      <p class="msg" role="status"></p>
+    </form>
+
+    <h2 id="ressources">Ressources et droits d'accès</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Service</th><th>Identifiant</th><th>Rôles autorisés</th><th></th></tr></thead>
+        <tbody id="resources"></tbody>
+      </table>
+    </div>
+    <p class="msg" id="resources-msg" role="status"></p>
+
+    <h3>Nouvelle ressource</h3>
+    <form id="resource-form">
+      <label>Nom
+        <input name="name" maxlength="100" required>
+      </label>
+      <label>Identifiant
+        <input name="slug" pattern="[a-z0-9\-]{2,50}" maxlength="50" required title="minuscules, chiffres et tirets">
+      </label>
+      <label>URL
+        <input name="url" pattern="(https?:\/\/\S+|\/|\/[^\/\s]\S*)" placeholder="/mon-service/ ou https://…" required
+               title="Chemin local (/mon-service/) ou adresse http(s)://">
+      </label>
+      <fieldset><legend>Rôles autorisés</legend><div class="checks" data-roles="role_ids"></div></fieldset>
+      <div><button type="submit">Ajouter la ressource</button></div>
+      <p class="msg" role="status"></p>
+    </form>
+
+    <h2 id="journal">Journal d'authentification</h2>
+    <form id="events-form" class="inline">
+      <label>Type
+        <select name="type"><option value="">Tous</option></select>
+      </label>
+      <label>NIF
+        <input name="nif" inputmode="numeric" maxlength="13">
+      </label>
+      <label>Résultat
+        <select name="success">
+          <option value="">Tous</option>
+          <option value="true">Succès</option>
+          <option value="false">Échec</option>
+        </select>
+      </label>
+      <button type="submit" class="ghost">Filtrer</button>
+      <p class="msg" role="status"></p>
+    </form>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Date</th><th>Type</th><th>Résultat</th><th>NIF</th><th>IP</th><th>Détail</th></tr></thead>
+        <tbody id="events"></tbody>
+      </table>
+    </div>
+  </main>
+</body>
+</html>
