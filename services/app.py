@@ -30,7 +30,6 @@ CONTENT = {
         "rows": [
             ("Déclaration de revenus 2025", "Déposée le 22/05/2026"),
             ("Avis d'impôt 2025", "Disponible"),
-            ("Prélèvement à la source", "Taux personnalisé : 7,5 %"),
         ],
     },
     "intranet": {
@@ -59,10 +58,10 @@ app = FastAPI(title=CONTENT["title"], docs_url=None, redoc_url=None, openapi_url
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=ALLOWED_HOSTS)
 
 
-def check_access(token: str, client_ip: str | None, host: str) -> tuple[int, dict]:
-    """Demande à CERBER si le porteur du jeton peut accéder à ce service."""
+def call_cerber(path: str, token: str, client_ip: str | None, host: str) -> tuple[int, dict]:
+    """Appel à l'API CERBER avec le jeton de session de l'utilisateur."""
     req = urllib.request.Request(
-        f"{CERBER_API}/api/access/{SLUG}",
+        f"{CERBER_API}{path}",
         # Host public transmis tel quel : le backend applique le même ALLOWED_HOSTS
         headers={"Authorization": f"Bearer {token}", "X-Real-IP": client_ip or "", "Host": host},
     )
@@ -73,6 +72,15 @@ def check_access(token: str, client_ip: str | None, host: str) -> tuple[int, dic
         return err.code, {}
     except (urllib.error.URLError, TimeoutError):
         return 503, {}
+
+
+def tax_rate_row(token: str, client_ip: str | None, host: str) -> tuple[str, str] | None:
+    """Ligne « Prélèvement à la source » avec le taux fixé par les agents (contribuables uniquement)."""
+    status, me = call_cerber("/api/me", token, client_ip, host)
+    rate = me.get("tax_rate") if status == 200 else None
+    if rate is None:
+        return None
+    return ("Prélèvement à la source", f"Taux personnalisé : {rate:.1f} %".replace(".", ","))
 
 
 def page(title: str, body: str, status: int = 200) -> HTMLResponse:
@@ -109,7 +117,8 @@ def health():
 @app.get(f"/{SLUG}/{{path:path}}")
 def protected(request: Request, path: str = ""):
     token = request.cookies.get(SESSION_COOKIE)
-    status, data = check_access(token, request.headers.get("x-real-ip"), request.headers.get("host", "")) if token else (401, {})
+    client = (request.headers.get("x-real-ip"), request.headers.get("host", ""))
+    status, data = call_cerber(f"/api/access/{SLUG}", token, *client) if token else (401, {})
 
     if status == 401:
         # Pas connecté (ou session expirée) : passage par le portail puis retour ici
@@ -128,9 +137,13 @@ def protected(request: Request, path: str = ""):
         return page("Service indisponible",
                     "    <h1>Service indisponible</h1>\n    <p>CERBER ne répond pas. Réessayez dans un instant.</p>", 503)
 
+    table = list(CONTENT["rows"])
+    if SLUG == "impots" and (row := tax_rate_row(token, *client)):
+        table.append(row)
+
     head = "".join(f"<th>{html.escape(c)}</th>" for c in CONTENT["columns"])
     rows = "".join(
-        "<tr>" + "".join(f"<td>{html.escape(v)}</td>" for v in row) + "</tr>" for row in CONTENT["rows"]
+        "<tr>" + "".join(f"<td>{html.escape(v)}</td>" for v in row) + "</tr>" for row in table
     )
     return page(
         CONTENT["title"],
