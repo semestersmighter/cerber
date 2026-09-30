@@ -22,6 +22,7 @@ Ce portail doit comprendre les fonctionnalités et prérequis suivants :
 * L’administrateur peut supprimer un compte. 
 * L’administrateur peut ajouter une nouvelle ressource. 
 * L’administrateur peut configurer l’accès à une ressource suivant le rôle de l’utilisateur. 
+* L’agent peut modifier le taux d’imposition (prélèvement à la source) d’un contribuable. 
 
 ## Spécifications techniques
 * Base de données pour la gestion des utilisateurs -> SQL. 
@@ -65,16 +66,17 @@ sans reconnexion.
 
 Les adresses des services sont des **chemins relatifs** (`/intranet/`) : les liens et redirections
 suivent le nom d'hôte utilisé pour ouvrir le portail (localhost, IP du serveur, nom de domaine…).
-Une ressource externe peut aussi être déclarée avec une URL complète `https://…`.
+Une ressource externe peut aussi être déclarée avec une URL complète `https://…` (le HTTP en clair est refusé).
 
 | Service | URL | Administrateur | Agent DGFIP | Contribuable |
 |---|---|:-:|:-:|:-:|
 | Espace particulier | `/impots/` | ✗ | ✓ | ✓ |
 | Intranet DGFIP | `/intranet/` | ✓ | ✓ | ✗ |
 | FICOBA | `/ficoba/` | ✗ | ✓ | ✗ |
+| Taux d'imposition (page du portail) | `/taux.html` | ✗ | ✓ | ✗ |
 
 Pour ajouter un service : ajouter un conteneur `svc-xxx` dans `docker-compose.yml`, une `location /xxx`
-dans `frontend/nginx.conf`, son contenu dans `services/app.py`, puis déclarer la ressource `xxx`
+dans `frontend/nginx.conf.template`, son contenu dans `services/app.py`, puis déclarer la ressource `xxx`
 dans la page Administration.
 
 ### Parcours de connexion
@@ -83,8 +85,19 @@ dans la page Administration.
 2. Première connexion : un QR code TOTP s'affiche et l'utilisateur le scanne (Google Authenticator, FreeOTP…).
 3. Code TOTP à 6 chiffres, avec anti-rejeu : un même code ne sert qu'une fois. Le cookie de session `cerber_session` (60 min) est alors émis.
 
-Le compteur d'échecs cumule les erreurs de mot de passe **et** de code TOTP. Au 5e échec, le compte
-est verrouillé pendant 15 min (ou jusqu'au déverrouillage par un administrateur).
+Le compteur d'échecs cumule les erreurs de mot de passe **et** de code TOTP, y compris le mot de passe
+redemandé dans « Mon compte » (changement de mot de passe ou d'application TOTP) : un jeton de session
+volé ne permet donc pas de deviner le mot de passe. Au 5e échec, le compte est verrouillé pendant 15 min
+(ou jusqu'au déverrouillage par un administrateur) et ses sessions ouvertes sont fermées.
+
+### Taux d'imposition
+
+Les agents modifient le taux de prélèvement à la source des contribuables (0 à 60 %, une décimale)
+depuis la page `/taux.html`, listée dans « Mes services ». Les droits passent par la ressource `taux` :
+l'administrateur choisit dans la page Administration quels rôles y ont accès (Agent DGFIP par défaut).
+Un agent ne peut modifier ni son propre taux ni celui d'un compte qui n'est pas contribuable.
+Chaque modification est tracée (`TAX_RATE`, avec l'ancien et le nouveau taux) et le contribuable voit
+son taux dans l'Espace particulier (`/impots/`).
 
 ## Lancement
 
@@ -139,6 +152,7 @@ Une valeur invalide empêche le démarrage, avec un message explicite dans `dock
 | `/services.html` | Services accessibles selon les rôles |
 | `/account.html` | Email, adresse, mot de passe, changement d'application TOTP |
 | `/admin.html` | Comptes, ressources et droits par rôle, journal d'authentification |
+| `/taux.html` | Taux d'imposition des contribuables (agents) |
 
 ## API
 
@@ -150,7 +164,7 @@ Une valeur invalide empêche le démarrage, avec un message explicite dans `dock
 | POST | `/api/auth/refresh` | Renouvelle le jeton (l'ancien est invalidé) |
 | POST | `/api/auth/logout` | Ferme la session |
 | POST | `/api/auth/password/forgot` | `{nif, code, new_password}` |
-| GET / PATCH | `/api/me` | Profil / `{email, address}` |
+| GET / PATCH | `/api/me` | Profil (avec `tax_rate` pour un contribuable) / `{email, address}` |
 | POST | `/api/me/password` | `{current_password, new_password}` |
 | POST | `/api/me/totp/renew` puis `/api/me/totp/confirm` | Changement d'application TOTP |
 | GET | `/api/me/resources` | Ressources accessibles |
@@ -162,7 +176,10 @@ Une valeur invalide empêche le démarrage, avec un message explicite dans `dock
 | PUT | `/api/admin/resources/{id}/roles` | `{role_ids}` : rôles autorisés |
 | DELETE | `/api/admin/resources/{id}` | Suppression |
 | GET | `/api/admin/roles` | Rôles |
-| GET | `/api/admin/events?type=&nif=&success=` | Journal (LOGIN, MFA, ACCOUNT_LOCKED, TOKEN_RENEWED, PASSWORD_RESET…) |
+| GET | `/api/admin/events?type=&nif=&success=` | Journal (LOGIN, MFA, ACCOUNT_LOCKED, TOKEN_RENEWED, PASSWORD_RESET, TAX_RATE…) |
+| GET | `/api/tax/taxpayers?nif=` | Contribuables et leur taux (rôles autorisés sur `taux`) |
+| PUT | `/api/tax/taxpayers/{nif}` | `{rate}` : nouveau taux |
+| GET | `/api/health` | État de l'API et de la base |
 
 ### Exemples de calls API
 
