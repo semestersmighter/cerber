@@ -40,7 +40,7 @@ server {
     http2 on;
     server_name _;
 
-    # Certificat auto-signé généré à la construction de l'image (à remplacer en production)
+    # Certificat auto-signé créé au premier démarrage (25-cerber-cert.sh), à remplacer en production
     ssl_certificate     /etc/nginx/certs/cerber.crt;
     ssl_certificate_key /etc/nginx/certs/cerber.key;
     ssl_protocols       TLSv1.2 TLSv1.3;
