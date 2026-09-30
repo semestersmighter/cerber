@@ -87,6 +87,9 @@ header nav a:hover, header nav a[aria-current="page"] { color: var(--fg); }
 
 form { display: grid; gap: 1rem; }
 form.inline { grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); align-items: end; }
+form.rate { grid-template-columns: 6rem auto minmax(6rem, 1fr); align-items: center; gap: .5rem; }
+form.rate input { padding: .25rem .5rem; }
+form.rate .msg { min-height: 0; }
 
 label { display: grid; gap: .3rem; font-size: .9rem; color: var(--muted); }
 
