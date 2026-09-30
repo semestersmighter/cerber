@@ -1,4 +1,7 @@
-fastapi
+fastapi==0.141.1
 uvicorn[standard]
 psycopg[binary]
+psycopg_pool
 argon2-cffi
+pyotp
+segno
