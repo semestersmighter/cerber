@@ -210,6 +210,7 @@ def test_admin_users_resources_and_events():
         res = {"slug": "cadastre", "name": "Cadastre", "url": "/cadastre/", "role_ids": [roles["Agent DGFIP"]]}
         assert c.post("/api/admin/resources", json={**res, "url": "javascript:alert(1)"}).status_code == 422
         assert c.post("/api/admin/resources", json={**res, "url": "//evil.example/"}).status_code == 422
+        assert c.post("/api/admin/resources", json={**res, "url": "http://clair.example/"}).status_code == 422
         rid = c.post("/api/admin/resources", json=res).json()["id"]
 
     with client() as u:
@@ -279,6 +280,24 @@ def test_logout():
         login(c, *ADMIN)
         assert c.post("/api/auth/logout").status_code == 200
         assert c.get("/api/me").status_code == 401
+
+
+def test_password_guessing_with_session_locks_account():
+    # Un jeton volé ne permet pas de deviner le mot de passe via l'espace utilisateur
+    with client() as c:
+        login(c, *AGENT)
+        for _ in range(2):
+            assert c.post("/api/me/totp/renew", json={"password": "faux"}).status_code == 401
+        for _ in range(2):
+            r = c.post("/api/me/password", json={"current_password": "faux", "new_password": NEW_PASSWORD})
+            assert r.status_code == 401
+        r = c.post("/api/me/password", json={"current_password": "faux", "new_password": NEW_PASSWORD})
+        assert r.status_code == 423
+        assert c.get("/api/me").status_code == 401  # sessions fermées
+        assert c.post("/api/auth/login", json={"nif": AGENT[0], "password": AGENT[1]}).status_code == 423
+    with client() as c:
+        login(c, *ADMIN)
+        assert c.post(f"/api/admin/users/{AGENT[0]}/unlock").status_code == 200
 
 
 # Matrice des droits attendue pour les 3 services simulés (conteneurs svc-*) et la page des taux

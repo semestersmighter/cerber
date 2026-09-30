@@ -50,9 +50,9 @@ class UserCreateIn(BaseModel):
 class ResourceIn(BaseModel):
     slug: str = Field(pattern=r"^[a-z0-9-]{2,50}$")
     name: str = Field(min_length=1, max_length=100)
-    # Chemin local (/intranet/) ou URL http(s) externe.
-    # Refuse javascript:, data: et les URL "//hote" (redirection vers un autre site).
-    url: str = Field(pattern=r"^(https?://\S+|/|/[^/\s]\S*)$", max_length=500)
+    # Chemin local (/intranet/) ou URL https externe (le portail n'envoie pas vers du HTTP en clair).
+    # Refuse http:, javascript:, data: et les URL "//hote" (redirection vers un autre site).
+    url: str = Field(pattern=r"^(https://\S+|/|/[^/\s]\S*)$", max_length=500)
     role_ids: list[int] = []
 
 

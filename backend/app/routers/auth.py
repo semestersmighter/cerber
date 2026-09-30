@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 
 from .. import config, db, events
 from ..deps import CurrentUser, clear_cookie, current_user, set_cookie
+from ..lockout import LOCKED, clear_expired_lock, get_user, register_failure
 from ..schemas import CodeIn, ForgotPasswordIn, LoginIn
 from ..security import (
     hash_password, hash_token, new_token, new_totp_secret, password_problems,
@@ -18,48 +19,9 @@ from ..security import (
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 INVALID = "Identifiants invalides"
-LOCKED = f"Compte verrouillé après {config.MAX_LOGIN_ATTEMPTS} échecs. Réessayez dans {config.LOCK_MINUTES} minutes."
 
 
 # ---------- Utilitaires ----------
-
-def _get_user(nif: str):
-    # "locked" est calculé par PostgreSQL pour éviter tout problème de fuseau horaire
-    return db.fetch_one(
-        '''
-        SELECT "nif", "email", "passwordHash", "nbTry", "lockDate",
-               "totpSecret", "totpPendingSecret", "totpLastStep",
-               ("lockDate" IS NOT NULL AND "lockDate" > now() - make_interval(mins => %s)) AS "locked"
-        FROM "User" WHERE "nif" = %s
-        ''',
-        (config.LOCK_MINUTES, nif),
-    )
-
-
-def _clear_expired_lock(user):
-    """Verrouillage expiré : le compteur repart de zéro."""
-    if user["lockDate"] is not None and not user["locked"]:
-        db.execute('UPDATE "User" SET "nbTry" = 0, "lockDate" = NULL WHERE "nif" = %s', (user["nif"],))
-        user["nbTry"] = 0
-
-
-def _register_failure(request: Request, nif: str) -> bool:
-    """Incrémente le compteur d'échecs ; renvoie True si le compte vient d'être verrouillé."""
-    row = db.execute(
-        '''
-        UPDATE "User"
-        SET "nbTry" = "nbTry" + 1,
-            "lockDate" = CASE WHEN "nbTry" + 1 >= %s THEN now() ELSE "lockDate" END
-        WHERE "nif" = %s
-        RETURNING "nbTry"
-        ''',
-        (config.MAX_LOGIN_ATTEMPTS, nif),
-    )
-    just_locked = row is not None and row["nbTry"] == config.MAX_LOGIN_ATTEMPTS
-    if just_locked:
-        events.log(request, events.ACCOUNT_LOCKED, True, nif)
-    return just_locked
-
 
 def _challenge_user(request: Request):
     """Utilisateur ayant validé son mot de passe mais pas encore son code TOTP."""
@@ -72,7 +34,7 @@ def _challenge_user(request: Request):
     )
     if row is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Délai dépassé, reconnectez-vous")
-    return _get_user(row["nif"])
+    return get_user(row["nif"])
 
 
 def _open_session(response: Response, nif: str) -> str:
@@ -92,7 +54,7 @@ def _open_session(response: Response, nif: str) -> str:
 
 @router.post("/login")
 def login(body: LoginIn, request: Request, response: Response):
-    user = _get_user(body.nif)
+    user = get_user(body.nif)
 
     if user is None:
         verify_password(None, body.password)  # temps de réponse constant
@@ -103,11 +65,11 @@ def login(body: LoginIn, request: Request, response: Response):
         events.log(request, events.LOGIN, False, user["nif"], "compte verrouillé")
         raise HTTPException(status.HTTP_423_LOCKED, LOCKED)
 
-    _clear_expired_lock(user)
+    clear_expired_lock(user)
 
     if not verify_password(user["passwordHash"], body.password):
         events.log(request, events.LOGIN, False, user["nif"], "mot de passe incorrect")
-        if _register_failure(request, user["nif"]):
+        if register_failure(request, user["nif"]):
             raise HTTPException(status.HTTP_423_LOCKED, LOCKED)
         # Même message que pour un NIF inconnu : on ne révèle pas quels comptes existent
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, INVALID)
@@ -159,7 +121,7 @@ def mfa(body: CodeIn, request: Request, response: Response):
     step = verify_totp(secret, body.code, user["totpLastStep"])
     if step is None:
         events.log(request, events.MFA, False, user["nif"], "code TOTP invalide")
-        if _register_failure(request, user["nif"]):
+        if register_failure(request, user["nif"]):
             db.execute('DELETE FROM "MfaChallenge" WHERE "nif" = %s', (user["nif"],))
             clear_cookie(response, config.MFA_COOKIE)
             raise HTTPException(status.HTTP_423_LOCKED, LOCKED)
@@ -212,19 +174,19 @@ def forgot_password(body: ForgotPasswordIn, request: Request):
     if problems:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Le mot de passe doit contenir " + ", ".join(problems))
 
-    user = _get_user(body.nif)
+    user = get_user(body.nif)
     if user is None or user["totpSecret"] is None:
         events.log(request, events.PASSWORD_RESET, False, user and user["nif"], "compte inconnu ou sans TOTP")
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "NIF ou code incorrect")
     if user["locked"]:
         events.log(request, events.PASSWORD_RESET, False, user["nif"], "compte verrouillé")
         raise HTTPException(status.HTTP_423_LOCKED, LOCKED)
-    _clear_expired_lock(user)
+    clear_expired_lock(user)
 
     step = verify_totp(user["totpSecret"], body.code, user["totpLastStep"])
     if step is None:
         events.log(request, events.PASSWORD_RESET, False, user["nif"], "code TOTP invalide")
-        if _register_failure(request, user["nif"]):
+        if register_failure(request, user["nif"]):
             raise HTTPException(status.HTTP_423_LOCKED, LOCKED)
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "NIF ou code incorrect")
 

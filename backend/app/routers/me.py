@@ -4,11 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from .. import db, events
 from ..deps import CurrentUser, current_user
+from ..lockout import check_password
 from ..schemas import ChangePasswordIn, CodeIn, PasswordIn, ProfileIn
-from ..security import (
-    hash_password, new_totp_secret, password_problems, totp_qr_svg, totp_uri,
-    verify_password, verify_totp,
-)
+from ..security import hash_password, new_totp_secret, password_problems, totp_qr_svg, totp_uri, verify_totp
 
 router = APIRouter(prefix="/api/me", tags=["utilisateur"])
 
@@ -42,10 +40,7 @@ def update_profile(body: ProfileIn, request: Request, user: CurrentUser = Depend
 
 @router.post("/password")
 def change_password(body: ChangePasswordIn, request: Request, user: CurrentUser = Depends(current_user)):
-    row = db.fetch_one('SELECT "passwordHash" FROM "User" WHERE "nif" = %s', (user.nif,))
-    if not verify_password(row["passwordHash"], body.current_password):
-        events.log(request, events.PASSWORD_CHANGED, False, user.nif, "mot de passe actuel incorrect")
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Mot de passe actuel incorrect")
+    check_password(request, user.nif, body.current_password, events.PASSWORD_CHANGED)
     problems = password_problems(body.new_password)
     if problems:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Le mot de passe doit contenir " + ", ".join(problems))
@@ -60,10 +55,7 @@ def change_password(body: ChangePasswordIn, request: Request, user: CurrentUser 
 @router.post("/totp/renew")
 def renew_totp(body: PasswordIn, request: Request, user: CurrentUser = Depends(current_user)):
     """Changement d'application TOTP (nouveau téléphone) : confirmé par le mot de passe."""
-    row = db.fetch_one('SELECT "passwordHash" FROM "User" WHERE "nif" = %s', (user.nif,))
-    if not verify_password(row["passwordHash"], body.password):
-        events.log(request, events.TOTP_ENROLLED, False, user.nif, "mot de passe incorrect")
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Mot de passe incorrect")
+    check_password(request, user.nif, body.password, events.TOTP_ENROLLED)
     secret = new_totp_secret()
     db.execute('UPDATE "User" SET "totpPendingSecret" = %s WHERE "nif" = %s', (secret, user.nif))
     return {"secret": secret, "qr_svg": totp_qr_svg(totp_uri(secret, user.email))}

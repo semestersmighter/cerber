@@ -36,7 +36,7 @@ app.include_router(tax.router)
 
 FIELD_LABELS = {
     "nif": "NIF (13 chiffres)", "code": "code (6 chiffres)", "email": "email",
-    "url": "URL (chemin comme /intranet/, ou http(s)://)", "slug": "identifiant (minuscules, chiffres, tirets)",
+    "url": "URL (chemin comme /intranet/, ou https://)", "slug": "identifiant (minuscules, chiffres, tirets)",
     "role_ids": "rôles", "name": "nom", "address": "adresse", "rate": "taux (0 à 60 %, une décimale)",
 }
 
