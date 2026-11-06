@@ -152,6 +152,27 @@ docker compose build && docker compose push frontend backend svc-impots
 Aucune clé n'est incluse dans l'image du frontend : le certificat auto-signé est créé au premier
 démarrage et conservé dans le volume `certs`. Pour un vrai certificat, y placer `cerber.crt` et `cerber.key`.
 
+### Déploiement Kubernetes
+
+Les manifests sont dans `k8s/` et utilisent les images publiées sur `ghcr.io` (elles doivent être publiques).
+Préparer `.env` comme pour Docker Compose, avec `HTTPS_PORT=30443` (port NodePort du frontend).
+
+```bash
+kubectl apply -f k8s/namespace.yaml
+kubectl -n cerber create secret generic cerber-env --from-env-file=.env
+kubectl -n cerber create configmap db-init --from-file=backend/init.sql
+
+# certificat auto-signé (ou fournir un vrai certificat)
+openssl req -x509 -nodes -newkey rsa:2048 -days 365 -subj "/CN=localhost" \
+  -addext "subjectAltName=DNS:localhost,IP:127.0.0.1" -keyout cerber.key -out cerber.crt
+kubectl -n cerber create secret tls cerber-tls --cert=cerber.crt --key=cerber.key
+
+kubectl apply -f k8s/
+```
+
+Application : `https://<ip-d-un-noeud>:30443` (penser à ajouter cette IP dans `ALLOWED_HOSTS`).
+Le certificat n'est pas créé automatiquement sous Kubernetes : le secret `cerber-tls` est obligatoire.
+
 ### Nom d'hôte et en-têtes (`.env`)
 
 | Variable | Valeurs | Rôle |

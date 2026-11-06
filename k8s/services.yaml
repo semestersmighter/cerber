@@ -1,0 +1,114 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: svc-impots
+  namespace: cerber
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: svc-impots }
+  template:
+    metadata:
+      labels: { app: svc-impots }
+    spec:
+      containers:
+        - name: svc
+          image: ghcr.io/semestersmighter/cerber-services:latest
+          imagePullPolicy: Always
+          env:
+            - name: SERVICE_SLUG
+              value: impots
+            - name: CERBER_API
+              value: http://backend:8000
+            - name: ALLOWED_HOSTS
+              valueFrom:
+                secretKeyRef: { name: cerber-env, key: ALLOWED_HOSTS }
+          ports:
+            - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-impots
+  namespace: cerber
+spec:
+  selector: { app: svc-impots }
+  ports:
+    - port: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: svc-intranet
+  namespace: cerber
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: svc-intranet }
+  template:
+    metadata:
+      labels: { app: svc-intranet }
+    spec:
+      containers:
+        - name: svc
+          image: ghcr.io/semestersmighter/cerber-services:latest
+          imagePullPolicy: Always
+          env:
+            - name: SERVICE_SLUG
+              value: intranet
+            - name: CERBER_API
+              value: http://backend:8000
+            - name: ALLOWED_HOSTS
+              valueFrom:
+                secretKeyRef: { name: cerber-env, key: ALLOWED_HOSTS }
+          ports:
+            - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-intranet
+  namespace: cerber
+spec:
+  selector: { app: svc-intranet }
+  ports:
+    - port: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: svc-ficoba
+  namespace: cerber
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: svc-ficoba }
+  template:
+    metadata:
+      labels: { app: svc-ficoba }
+    spec:
+      containers:
+        - name: svc
+          image: ghcr.io/semestersmighter/cerber-services:latest
+          imagePullPolicy: Always
+          env:
+            - name: SERVICE_SLUG
+              value: ficoba
+            - name: CERBER_API
+              value: http://backend:8000
+            - name: ALLOWED_HOSTS
+              valueFrom:
+                secretKeyRef: { name: cerber-env, key: ALLOWED_HOSTS }
+          ports:
+            - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-ficoba
+  namespace: cerber
+spec:
+  selector: { app: svc-ficoba }
+  ports:
+    - port: 8000
+---
