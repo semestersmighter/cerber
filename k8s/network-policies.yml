@@ -1,0 +1,89 @@
+# Flux autorisés entre les pods du namespace cerber.
+# Tout le trafic entrant est refusé par défaut, puis ouvert flux par flux :
+#   extérieur -> frontend -> backend / svc-* -> backend -> db
+# Nécessite un plugin réseau qui applique les NetworkPolicy (Calico, Cilium, k3s…).
+
+# Refus par défaut de tout le trafic entrant
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: cerber
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+# frontend : joignable depuis l'extérieur (NodePort)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: frontend
+  namespace: cerber
+spec:
+  podSelector:
+    matchLabels: { app: frontend }
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - { protocol: TCP, port: 80 }
+        - { protocol: TCP, port: 443 }
+---
+# services protégés : joignables uniquement par le frontend
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: services
+  namespace: cerber
+spec:
+  podSelector:
+    matchExpressions:
+      - { key: app, operator: In, values: [svc-impots, svc-intranet, svc-ficoba] }
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: { app: frontend }
+      ports:
+        - { protocol: TCP, port: 8000 }
+---
+# backend : joignable par le frontend et par les services protégés
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: backend
+  namespace: cerber
+spec:
+  podSelector:
+    matchLabels: { app: backend }
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: { app: frontend }
+        - podSelector:
+            matchExpressions:
+              - { key: app, operator: In, values: [svc-impots, svc-intranet, svc-ficoba] }
+      ports:
+        - { protocol: TCP, port: 8000 }
+---
+# db : joignable uniquement par le backend
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: db
+  namespace: cerber
+spec:
+  podSelector:
+    matchLabels: { app: db }
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: { app: backend }
+      ports:
+        - { protocol: TCP, port: 5432 }
